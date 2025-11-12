@@ -12,34 +12,42 @@
             <p>First, tell me what ingredients you have</p>
         </div>
     {:else}
-        {#await getRecipe(selectedIngredients) then recipe}
-            {#if !recipe}
+        {#await getRecipe(selectedIngredients) then recipes}
+            {#if !recipes || !recipes.length}
                 <div class="placeholder">
                     <p>We're going to need something else to cook!</p>
                     <p>See if you have something else aroun the house?</p>
                 </div>
             {:else}
                 <h2>Now we're cooking! Here's what you can make with {selectedIngredients.join(', ')}:</h2>
-                <div class="recipe-card">
-                    <h3>{recipe.name}</h3>
-                    <div class="recipe-ingredients">
-                        <strong>Ingredients:</strong>
-                        {recipe.ingredients.join(', ')}
+                {#each recipes as recipe}
+                    <div class="recipe-card">
+                        <h3>{recipe.title}</h3>
+                        <div class="recipe-ingredients">
+                            <strong>Ingredients:</strong>
+                            {recipe.ingredients.map(i => i.name).join(', ')}
+                        </div>
+                        <div class="recipe-instructions">
+                            <strong>Instructions:</strong>
+                            {recipe.directions}
+                        </div>
                     </div>
-                    <div class="recipe-instructions">
-                        <strong>Instructions:</strong>
-                        {recipe.instructions}
-                    </div>
-                </div>
+                {/each}
             {/if}
         {/await}
     {/if}
 </div>
 
 <style>
+    h2 {
+        margin: 0;
+    }
+
     .recipes-section {
+        overflow: auto;
         display: flex;
         flex-direction: column;
+        gap: 20px;
     }
 
     .placeholder {

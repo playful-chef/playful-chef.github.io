@@ -1,41 +1,13 @@
-export const availableIngredients = [
-  "chicken",
-  "beef",
-  "pork",
-  "fish",
-  "shrimp",
-  "eggs",
-  "milk",
-  "cheese",
-  "butter",
-  "yogurt",
-  "rice",
-  "pasta",
-  "bread",
-  "flour",
-  "oats",
-  "tomato",
-  "onion",
-  "garlic",
-  "potato",
-  "carrot",
-  "bell pepper",
-  "broccoli",
-  "spinach",
-  "mushroom",
-  "apple",
-  "banana",
-  "orange",
-  "lemon",
-  "lime",
-  "olive oil",
-  "soy sauce",
-  "salt",
-  "pepper",
-  "sugar",
-  "basil",
-  "oregano",
-  "thyme",
-  "cumin",
-  "paprika",
-];
+export type Ingredient = {
+  id: number;
+  name: string;
+  recipe_count: number;
+};
+
+export async function loadIngredients() {
+  const response = await fetch("https://api.thoughtspile.tech/ingredients");
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ingredients: ${response.status}`);
+  }
+  return (await response.json()) as Ingredient[];
+}

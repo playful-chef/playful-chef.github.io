@@ -1,16 +1,23 @@
 <script lang="ts">
-    import { availableIngredients } from "./ingredients";
+    import { loadIngredients, type Ingredient } from './ingredients';
     
     type Props = { selectedIngredients: string[] };
     let { selectedIngredients = $bindable([]) }: Props = $props();
     
     let searchTerm = $state('');
 
-    function toggleIngredient(ingredient: string) {
-        if (selectedIngredients.includes(ingredient)) {
-            selectedIngredients = selectedIngredients.filter(i => i !== ingredient);
+    // Store the promise for the await block
+    let ingredientsPromise = $state(loadIngredients());
+
+    function retryLoad() {
+        ingredientsPromise = loadIngredients();
+    }
+
+    function toggleIngredient(ingredientName: string) {
+        if (selectedIngredients.includes(ingredientName)) {
+            selectedIngredients = selectedIngredients.filter(i => i !== ingredientName);
         } else {
-            selectedIngredients = [...selectedIngredients, ingredient];
+            selectedIngredients = [...selectedIngredients, ingredientName];
         }
         searchTerm = ''
     }
@@ -20,9 +27,11 @@
         selectedIngredients = [];
     }
 
-    let filteredIngredients = $derived(availableIngredients.filter(ingredient =>
-        ingredient.toLowerCase().includes(searchTerm.toLowerCase())
-    ));
+    function filterIngredients(ingredients: Ingredient[], searchTerm: string) {
+        return ingredients.filter(ingredient =>
+            ingredient.name.toLowerCase().includes(searchTerm.toLowerCase())
+        ).toSorted((a, b) => Number(selectedIngredients.includes(b.name)) - Number(selectedIngredients.includes(a.name)))
+    }
 </script>
 
 <div class="search-section">
@@ -40,29 +49,39 @@
         {/if}
     </div>
 
-    <div class="available-ingredients">
-        {#each filteredIngredients as ingredient}
-            <button 
-                class="chip {selectedIngredients.includes(ingredient) ? 'selected' : 'available'}" 
-                onclick={() => toggleIngredient(ingredient)}
-            >
-                {ingredient}
-                {#if selectedIngredients.includes(ingredient)}
-                    <span class="remove">×</span>
-                {/if}
-            </button>
-        {/each}
-        {#if filteredIngredients.length === 0 && searchTerm}
-            <p class="no-results">I don't think these's an ingredient called "{searchTerm}"</p>
-        {/if}
-    </div>
+    {#await ingredientsPromise}
+        <div class="loading">Loading ingredients...</div>
+    {:then availableIngredients}
+        <div class="available-ingredients">
+            {#each filterIngredients(availableIngredients, searchTerm) as ingredient}
+                <button 
+                    class="chip {selectedIngredients.includes(ingredient.name) ? 'selected' : 'available'}" 
+                    onclick={() => toggleIngredient(ingredient.name)}
+                >
+                    {ingredient.name}
+                    {#if selectedIngredients.includes(ingredient.name)}
+                        <span class="remove">×</span>
+                    {/if}
+                </button>
+            {/each}
+            {#if filterIngredients(availableIngredients, searchTerm).length === 0 && searchTerm}
+                <p class="no-results">I don't think there's an ingredient called "{searchTerm}"</p>
+            {/if}
+        </div>
+    {:catch error}
+        <div class="error">
+            <p>Error loading ingredients: {error.message}</p>
+            <button onclick={retryLoad} class="retry-button">Retry</button>
+        </div>
+    {/await}
 </div>
 
 <style>
     .search-section {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: max-content 1fr;
         gap: 20px;
+        overflow: hidden;
     }
 
     .search-container {
@@ -146,5 +165,34 @@
         font-style: italic;
         width: 100%;
         margin: 0;
+    }
+
+    .loading {
+        text-align: center;
+        color: #6c757d;
+        padding: 20px;
+    }
+
+    .error {
+        text-align: center;
+        color: #dc3545;
+        padding: 20px;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        background: #f8d7da;
+    }
+
+    .retry-button {
+        margin-top: 10px;
+        padding: 8px 16px;
+        background: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .retry-button:hover {
+        background: #c82333;
     }
 </style>

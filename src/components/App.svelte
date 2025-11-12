@@ -24,6 +24,8 @@
         padding: 20px;
         height: 100vh;
         box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
     }
 
     .header {
@@ -39,6 +41,9 @@
     }
 
     .main {
+        flex: 1;
+        min-height: 0;
+        align-items: stretch;
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 40px;
