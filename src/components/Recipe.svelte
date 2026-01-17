@@ -54,6 +54,10 @@
       <p>Из этого каши не сваришь!</p>
       <p>Может, найдется еще что-нибудь?</p>
     </div>
+  {:else if "text" in recipe}
+    <div class="placeholder">
+      <p>{recipe.text}</p>
+    </div>
   {:else}
     <div class="recipe-card">
       <h3>{recipe.title}</h3>

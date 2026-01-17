@@ -3,13 +3,13 @@ import type { Ingredient } from "./ingredients";
 export async function getRecipe(
   basePrompt: string,
   selectedIngredients: string[],
-): Promise<Recipe | null> {
+): Promise<Recipe | Text | null> {
   if (selectedIngredients.length === 0 && !basePrompt) return null;
 
   const ingredientPrompt = selectedIngredients.length
-    ? `. у меня есть продукты: ${selectedIngredients.join(", ")}`
+    ? `у меня есть продукты: ${selectedIngredients.join(", ")}`
     : "";
-  const prompt = [basePrompt, ingredientPrompt].filter(Boolean).join("");
+  const prompt = [basePrompt, ingredientPrompt].filter(Boolean).join(". ");
 
   const url = new URL("https://api.thoughtspile.tech/agent");
   url.searchParams.append("user_message", prompt);
@@ -20,7 +20,9 @@ export async function getRecipe(
     throw new Error(`Failed to fetch ingredients: ${response.status}`);
   }
   const { agent_response } = await response.json();
-  if (!agent_response || typeof agent_response !== "object") return null;
+  if (!agent_response || typeof agent_response !== "object") {
+    return { text: agent_response };
+  }
 
   return {
     ...agent_response,
@@ -42,11 +44,6 @@ export type Recipe = {
   total_time: string;
   servings: number;
   source_url: string;
-};
-
-type ShortRecipe = {
-  title: string;
-  url: string;
 };
 
 type Text = {
