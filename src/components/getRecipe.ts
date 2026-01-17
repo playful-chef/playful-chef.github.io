@@ -3,13 +3,13 @@ import type { Ingredient } from "./ingredients";
 export async function getRecipe(
   basePrompt: string,
   selectedIngredients: string[],
-): Promise<(ShortRecipe | Text)[] | Recipe[] | null> {
+): Promise<Recipe | null> {
   if (selectedIngredients.length === 0 && !basePrompt) return null;
 
   const ingredientPrompt = selectedIngredients.length
-    ? `у меня есть продукты: ${selectedIngredients.join(", ")}`
+    ? `. у меня есть продукты: ${selectedIngredients.join(", ")}`
     : "";
-  const prompt = [basePrompt, ingredientPrompt].filter(Boolean).join(" ");
+  const prompt = [basePrompt, ingredientPrompt].filter(Boolean).join("");
 
   const url = new URL("https://api.thoughtspile.tech/agent");
   url.searchParams.append("user_message", prompt);
@@ -20,25 +20,28 @@ export async function getRecipe(
     throw new Error(`Failed to fetch ingredients: ${response.status}`);
   }
   const { agent_response } = await response.json();
-  const linkMode = agent_response.includes("https:");
-  if (linkMode) {
-    const items: ShortRecipe[] = [];
-    const lines = agent_response.split("\n");
-    for (let i = 0; i < lines.length / 2; i++) {
-      if (lines[2 * i + 1].startsWith("https:"))
-        items.push({ title: lines[2 * i], url: lines[2 * i + 1] });
-    }
-    return items;
-  } else {
-    return [{ text: agent_response }];
-  }
+  if (!agent_response || typeof agent_response !== "object") return null;
+
+  return {
+    ...agent_response,
+    categories: agent_response.categories?.split(/,\s+/g) ?? [],
+    directions: agent_response.directions
+      .split(/Шаг \d+:\s*/g)
+      .map((s: string) => s.trim())
+      .filter((s: string) => !!s),
+  };
 }
 
 export type Recipe = {
   title: string;
+  link: string;
+  directions: string[];
   ingredients: Ingredient[];
-  directions: string;
-  time: number;
+  description: string;
+  categories: string[];
+  total_time: string;
+  servings: number;
+  source_url: string;
 };
 
 type ShortRecipe = {

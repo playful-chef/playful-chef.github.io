@@ -76,7 +76,7 @@
 
 <style>
   .app {
-    max-width: 1200px;
+    max-width: 720px;
     margin: 0 auto;
     padding: 20px;
     height: 100vh;

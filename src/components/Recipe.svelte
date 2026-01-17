@@ -8,14 +8,14 @@
   // State for tracking loading and error
   let isLoading = $state(false);
   let error = $state(false);
-  let recipes: Awaited<ReturnType<typeof getRecipe>> = $state(null);
+  let recipe: Awaited<ReturnType<typeof getRecipe>> = $state(null);
 
   async function loadRecipes({ basePrompt, selectedIngredients }: Props) {
     if (!basePrompt && selectedIngredients.length === 0) return;
 
     isLoading = true;
     try {
-      recipes = await getRecipe(basePrompt, selectedIngredients);
+      recipe = await getRecipe(basePrompt, selectedIngredients);
     } catch (err) {
       error = true;
     } finally {
@@ -42,7 +42,6 @@
     <div class="placeholder">
       <div class="error-icon">⚠️</div>
       <h3>Что-то пошло не так</h3>
-      <p>{error}</p>
       <button
         onclick={() => loadRecipes({ basePrompt, selectedIngredients })}
         class="retry-button"
@@ -50,31 +49,28 @@
         Попробовать снова
       </button>
     </div>
-  {:else if !recipes || !recipes.length}
+  {:else if !recipe}
     <div class="placeholder">
       <p>Из этого каши не сваришь!</p>
       <p>Может, найдется еще что-нибудь?</p>
     </div>
-  {:else if Array.isArray(recipes)}
-    {#each recipes as recipe}
-      <div class="recipe-card">
-        {#if "text" in recipe}
-          {recipe.text}
-        {:else if "url" in recipe}
-          <a href={recipe.url}>{recipe.title}</a>
-        {:else}
-          <h3>{recipe.title}</h3>
-          <div class="recipe-ingredients">
-            <strong>Вам понадобится:</strong>
-            {recipe.ingredients.map((i) => i.name).join(", ")}
-          </div>
-          <div class="recipe-instructions">
-            <strong>Как готовить:</strong>
-            {recipe.directions}
-          </div>
-        {/if}
+  {:else}
+    <div class="recipe-card">
+      <h3>{recipe.title}</h3>
+      <div class="recipe-ingredients">
+        <strong>Вам понадобится:</strong>
+        {recipe.ingredients.map((i) => i.name).join(", ")}
       </div>
-    {/each}
+      <div class="recipe-instructions">
+        <strong>Как готовить:</strong>
+        <ol>
+          {#each recipe.directions as step}
+            <li>{step}</li>
+          {/each}
+        </ol>
+      </div>
+      <a href={recipe.link}>Полный рецепт</a>
+    </div>
   {/if}
 </div>
 
